@@ -56,13 +56,8 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['username', 'email', 'password'], 'required'],
-            [['password'], 'safe'],
-            ['password', 'string', 'min' => Yii::$app->params['user.passwordMinLength'], 'tooShort' => 'A senha deve ter no mínimo 12 caracteres.'],
-            ['password', 'string', 'max' => Yii::$app->params['user.passwordMaxLength'], 'tooLong' => 'A senha deve ter no máximo 16 caracteres.'],
-            [['password'], 'match', 'pattern' => Yii::$app->params['user.passwordPattern'], 'message' => 'A senha deve conter pelo menos uma letra maiúscula, números e símbolos especiais.'],
+            [['username', 'email'], 'required'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            //['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
         ];
     }
 
@@ -79,7 +74,8 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
+        return static::findOne(['auth_key' => $token, 'status' => self::STATUS_ACTIVE]);
+        //throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
     }
 
     /**

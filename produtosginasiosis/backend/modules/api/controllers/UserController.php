@@ -2,54 +2,105 @@
 
 namespace backend\modules\api\controllers;
 
+use backend\models\UserForm;
 use backend\modules\api\components\CustomAuth;
-use common\models\User;
 use Yii;
-use yii\base\Security;
 use yii\rest\ActiveController;
 
 class UserController extends ActiveController
 {
     public $modelClass = 'common\models\User';
-    public $modelPerfilClass = 'common\models\Profile';
+
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+
+        // Verifique se as ações a executar são estas, se forem não precisa de validação de autenticação
+        if ($this->action->id == 'login' || $this->action->id == 'criaruser') {
+            unset($behaviors['authenticator']);
+        } else {
+            //caso contrário, precisa de validação de autenticação para efetuar as ações pretendidas
+            $behaviors['authenticator'] = [
+                'class' => CustomAuth::className(),
+            ];
+        }
+
+        return $behaviors;
+    }
+
+    public function actionLogin()
+    {
+        $userModel = new $this->modelClass;
+        $request = Yii::$app->request;
+        $username = $request->getBodyParam('username');
+        $password = $request->getBodyParam('password');
+
+        if (empty($username) || empty($password)) {
+            return 'Campos vazios';
+        }
+
+        $user = $userModel::find()->where(['username' => $username])->one();
+
+        if (!$user || !$user->validatePassword($password)) {
+            return 'Credenciais incorretas';
+        }
+
+        // Verifica se o usuário tem o papel "cliente"
+        if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
+            return 'O Utilizador introduzido não tem permissões de cliente';
+        }
+
+        $auth_key = $user->getAuthKey();
+
+        if (!$auth_key) {
+            return 'Não foi possível obter a auth_key';
+        }
+
+        return ['auth_key' => $auth_key];
+    }
 
 
     public function actionCriaruser()
     {
-        $userModel = new $this->modelClass;
-        $profileModel = new $this->modelPerfilClass;
+        //instancia o UserForm
+        $model = new UserForm();
+
         $request = Yii::$app->request;
 
         $username = $request->getBodyParam('username');
         $email = $request->getBodyParam('email');
-        $password = $request->getBodyParam('password_hash');
+        $password = $request->getBodyParam('password');
         $nif = $request->getBodyParam('nif');
         $morada = $request->getBodyParam('morada');
         $telefone = $request->getBodyParam('telefone');
 
-        $userModel->username = $username;
-        $userModel->email = $email;
-        $userModel->password_hash = User::class->setPassword($password);
-        $userModel->generateAuthKey();
-
-        //atribui a role
-        $auth = Yii::$app->authManager;
-        $role = $auth->getRole('cliente');
-        $auth->assign($role, $userModel->id);
-
-        //regista o perfil do utilizador a criar
-        $profileModel->nif = $nif;
-        $profileModel->morada = $morada;
-        $profileModel->telefone = $telefone;
-
-        //se o utilizador ficar bem criado
-        if ($userModel->save()) {
-            $profileModel->user_id = $userModel->id;
-            //se correr tudo bem
-            if ($profileModel->save()) {
-                return $userModel && $profileModel;
-            }
+        if ($model->create($username, $email, $password, $nif, $morada, $telefone)) {
+            return 'Cliente criado com sucesso!';
         }
+
+        return 'Falha na criação de um novo cliente';
+
+    }
+
+    public function actionAtualizaruser()
+    {
+        //instancia o UserForm
+        $model = new UserForm();
+
+        $request = Yii::$app->request;
+
+        $username = $request->getBodyParam('username');
+        $email = $request->getBodyParam('email');
+        $password = $request->getBodyParam('password');
+        $nif = $request->getBodyParam('nif');
+        $morada = $request->getBodyParam('morada');
+        $telefone = $request->getBodyParam('telefone');
+
+        if ($model->update($username, $email, $password, $nif, $morada, $telefone)) {
+            return 'Cliente atualizado com sucesso!';
+        }
+
+        return 'Falha na atualização do cliente pretendido';
 
     }
 

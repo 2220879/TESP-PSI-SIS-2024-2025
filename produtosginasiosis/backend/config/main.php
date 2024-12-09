@@ -19,6 +19,9 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]
         ],
         'user' => [
             'identityClass' => 'common\models\User',
@@ -47,9 +50,10 @@ return [
             'showScriptName' => false,
             'rules' => [
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/user',
-                    //'except' => ['create', 'update', 'delete'],
                     'extraPatterns' => [
-                        'POST user' => 'criaruser',
+                        'POST login' => 'login',
+                        'POST criaruser' => 'criaruser',
+                        'POST atualizaruser' => 'atualizaruser',
                     ],
                 ],
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/produto',
