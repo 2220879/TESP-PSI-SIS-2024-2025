@@ -128,4 +128,28 @@ class ProdutoController extends ActiveController
         ];
     }
 
+    public function actionDetalhes($id)
+    {
+        $produtomodel = new $this->modelClass;
+        //$produto = $produtomodel::findOne(['id' => $id]);
+        $produto = $produtomodel::find()->with('imagens')->where(['id' => $id])->one();
+        if (!$produto) {
+            return [
+                'status' => 'error',
+                'message' => 'Nenhum produto encontrado.'
+            ];
+        }
+        if ($produto) {
+            $imagens = $produto->imagens;
+            foreach ($imagens as $imagem) {
+                //
+            }
+        }
+
+        return [
+            'status' => 'success',
+            'data' => $produto,
+            'images' => $imagens
+        ];
+    }
 }

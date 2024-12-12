@@ -4,21 +4,26 @@ namespace backend\modules\api\controllers;
 
 use backend\models\UserForm;
 use backend\modules\api\components\CustomAuth;
+use common\models\User;
 use Yii;
 use yii\rest\ActiveController;
 
 class UserController extends ActiveController
 {
     public $modelClass = 'common\models\User';
+    public $modelProfileClass = 'common\models\Profile';
 
     public function behaviors()
     {
         $behaviors = parent::behaviors();
 
         // Verifique se as ações a executar são estas, se forem não precisa de validação de autenticação
-        if ($this->action->id == 'login' || $this->action->id == 'criaruser') {
+        if ($this->action->id == 'login' || $this->action->id == 'criaruser')
+        {
             unset($behaviors['authenticator']);
-        } else {
+        }
+        else
+        {
             //caso contrário, precisa de validação de autenticação para efetuar as ações pretendidas
             $behaviors['authenticator'] = [
                 'class' => CustomAuth::className(),
@@ -104,4 +109,26 @@ class UserController extends ActiveController
 
     }
 
+    public function actionDadosuserprofile()
+    {
+        $request = Yii::$app->request;
+
+        $user_id = $request->getBodyParam('user_id');
+
+        $user = User::find()
+            ->join('INNER JOIN', 'profiles', 'profiles.user_id = user.id')
+            ->select(['user.', 'profiles.'])
+            ->where(['user.id' => $user_id])
+            ->asArray()
+            ->one();
+
+        if ($user != null)
+        {
+            return $user;
+        }
+        else
+        {
+            return 'Falha no obter dos dados do cliente especifico';
+        }
+    }
 }

@@ -54,6 +54,7 @@ return [
                         'POST login' => 'login',
                         'POST criaruser' => 'criaruser',
                         'POST atualizaruser' => 'atualizaruser',
+                        'GET dadosuserprofile' => 'dadosuserprofile',
                     ],
                 ],
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/produto',
@@ -66,6 +67,7 @@ return [
                         'GET buscarporcategoria/{categoria_id}' => 'buscarporcategoria',
                         'GET buscarporgenero/{genero_id}' => 'buscarporgenero',
                         'GET imagens/{produto_id}' => 'imagens',
+                        'GET detalhes/{id}' => 'detalhes',
                     ],
                     'tokens' => [
                         '{id}' => '<id:\\d+>',
@@ -81,6 +83,36 @@ return [
                     'extraPatterns' => [
                         'GET count' => 'count',
                         'GET favoritos' => 'favoritos',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/categoria',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET categorias' => 'categorias',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/tamanho',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET tamanhos' => 'tamanhos',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/genero',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET generos' => 'generos',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/iva',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET ivas' => 'ivas',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/marca',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET marcas' => 'marcas',
                     ],
                 ],
             ],
