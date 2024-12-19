@@ -17,41 +17,10 @@ class UserController extends ActiveController
     {
         Yii::$app->params['id'] = 0;
         $behaviors = parent::behaviors();
-
-        // Verifique se as ações a executar são estas, se forem não precisa de validação de autenticação
-        if ($this->action->id == 'criaruser') {
-            unset($behaviors['authenticator']);
-        } else {
-            //caso contrário, precisa de validação de autenticação para efetuar as ações pretendidas
-            $behaviors['authenticator'] = [
-                'class' => CustomAuth::className(),
-            ];
-        }
-
+        $behaviors['authenticator'] = [
+            'class' => CustomAuth::className(),
+        ];
         return $behaviors;
-    }
-
-
-    public function actionCriaruser()
-    {
-        //instancia o UserForm
-        $model = new UserForm();
-
-        $request = Yii::$app->request;
-
-        $username = $request->getBodyParam('username');
-        $email = $request->getBodyParam('email');
-        $password = $request->getBodyParam('password');
-        $nif = $request->getBodyParam('nif');
-        $morada = $request->getBodyParam('morada');
-        $telefone = $request->getBodyParam('telefone');
-
-        if ($model->create($username, $email, $password, $nif, $morada, $telefone)) {
-            return 'Cliente criado com sucesso!';
-        }
-
-        return 'Falha na criação de um novo cliente';
-
     }
 
     public function actionAtualizaruser()
@@ -63,25 +32,23 @@ class UserController extends ActiveController
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
                 return 'O Utilizador introduzido não tem permissões de cliente';
             } else {
-                if (!Yii::$app->user->isGuest) {
-                    //instancia o UserForm
-                    $model = new UserForm();
+                //instancia o UserForm
+                $model = new UserForm();
 
-                    $request = Yii::$app->request;
+                $request = Yii::$app->request;
 
-                    $username = $request->getBodyParam('username');
-                    $email = $request->getBodyParam('email');
-                    $password = $request->getBodyParam('password');
-                    $nif = $request->getBodyParam('nif');
-                    $morada = $request->getBodyParam('morada');
-                    $telefone = $request->getBodyParam('telefone');
+                $username = $request->getBodyParam('username');
+                $email = $request->getBodyParam('email');
+                $password = $request->getBodyParam('password');
+                $nif = $request->getBodyParam('nif');
+                $morada = $request->getBodyParam('morada');
+                $telefone = $request->getBodyParam('telefone');
 
-                    if ($model->update($user->id, $username, $email, $password, $nif, $morada, $telefone)) {
-                        return 'Cliente atualizado com sucesso!';
-                    }
-
-                    return 'Falha na atualização do cliente pretendido';
+                if ($model->update($user->id, $username, $email, $password, $nif, $morada, $telefone)) {
+                    return 'Cliente atualizado com sucesso!';
                 }
+
+                return 'Falha na atualização do cliente pretendido';
             }
         }
         return 'Não foi realizado a atualização dos dados.';

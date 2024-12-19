@@ -49,10 +49,14 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/user',
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/login',
                     'extraPatterns' => [
                         'POST login' => 'login',
                         'POST criaruser' => 'criaruser',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/user',
+                    'extraPatterns' => [
                         'POST atualizaruser' => 'atualizaruser',
                         'GET dadosuserprofile' => 'dadosuserprofile',
                     ],
@@ -83,6 +87,8 @@ return [
                     'extraPatterns' => [
                         'GET count' => 'count',
                         'GET favoritos' => 'favoritos',
+                        'POST atribuirprodutofavorito' => 'atribuirprodutofavorito',
+                        'DELETE apagarprodutofavorito' => 'apagarprodutofavorito',
                     ],
                 ],
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/categoria',
@@ -113,6 +119,30 @@ return [
                     'extraPatterns' => [
                         'GET count' => 'count',
                         'GET marcas' => 'marcas',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/cupaodesconto',
+                    'extraPatterns' => [
+                        'GET count' => 'count',
+                        'GET cupaodesconto' => 'cupaodesconto',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/usocupao',
+                    'extraPatterns' => [
+                        'POST usocupao' => 'usocupao',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/carrinhocompra',
+                    'extraPatterns' => [
+                        'POST adicionarcarrinho' => 'adicionarcarrinho',
+                        'POST diminuir' => 'diminuir',
+                        'POST aumentar' => 'aumentar',
+                        'DELETE apagarlinhacarrinho' => 'apagarlinhacarrinho',
+                    ],
+                ],
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'api/encomenda',
+                    'extraPatterns' => [
+                        'POST criarencomenda' => 'criarencomenda',
                     ],
                 ],
             ],
