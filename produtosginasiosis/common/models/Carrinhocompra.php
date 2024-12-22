@@ -2,6 +2,10 @@
 
 namespace common\models;
 
+use common\models\Profile;
+use common\models\Linhacarrinho;
+use Yii;
+
 /**
  * This is the model class for table "carrinhocompras".
  *
