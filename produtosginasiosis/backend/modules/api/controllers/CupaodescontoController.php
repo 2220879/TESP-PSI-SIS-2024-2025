@@ -17,6 +17,7 @@ class CupaodescontoController extends ActiveController
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => CustomAuth::className(),
+            'except' => ['cupoesdescontovalidos'],
         ];
         return $behaviors;
     }
@@ -28,14 +29,16 @@ class CupaodescontoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $cupaodescontomodel = new $this->modelClass;
                 $recs = $cupaodescontomodel::find()->all();
                 return ['count' => count($recs)];
             }
         }
-        return 'Não foi possível contar os cupões de desconto.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível contar os cupões de desconto.'];
     }
 
     public function actionCupaodesconto()
@@ -45,13 +48,36 @@ class CupaodescontoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $cupaodescontomodel = new $this->modelClass;
                 $recs = $cupaodescontomodel::find()->all();
                 return ['cupaodesconto' => $recs];
             }
         }
-        return 'Não foi possível obter os cupões de desconto.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível obter os cupões de desconto.'];
     }
+
+    public function actionCupoesdescontovalidos()
+    {
+        $cupaodescontomodel = new $this->modelClass;
+
+        $currentDate = date('Y-m-d');
+
+        $recs = $cupaodescontomodel::find()
+            ->where(['>=', 'dataFim', $currentDate])
+            ->all();
+
+        $cupoesDesconto = [];
+        foreach ($recs as $rec) {
+            $rec->desconto = $rec->desconto * 100;
+            $rec->dataFim = date('d-m-Y', strtotime($rec->dataFim));
+            $cupoesDesconto[] = $rec;
+        }
+
+        return $cupoesDesconto;
+    }
+
 }

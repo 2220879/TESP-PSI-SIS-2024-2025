@@ -3,6 +3,9 @@
 namespace backend\modules\api\controllers;
 
 use backend\modules\api\components\CustomAuth;
+use common\models\Categoria;
+use common\models\Genero;
+use common\models\Marca;
 use common\models\Produto;
 use common\models\User;
 use Yii;
@@ -18,6 +21,7 @@ class ProdutoController extends ActiveController
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => CustomAuth::className(),
+            'except' => ['produtos', 'ultimosprodutosinseridos'],
         ];
         return $behaviors;
     }
@@ -29,68 +33,105 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
                 $recs = $produtosmodel::find()->all();
                 return ['count' => count($recs)];
             }
         }
-        return 'Não foi possivel contar os produtos.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel contar os produtos.'];
+
+    }
+
+    public function actionUltimosprodutosinseridos()
+    {
+        $produtos = Produto::find()
+            ->with(['imagens' => function ($query) {
+                // Carrega apenas a primeira imagem associada
+                $query->orderBy(['id' => SORT_ASC])->limit(1);
+            }])
+            ->orderBy(['id' => SORT_DESC])
+            ->limit(9)
+            ->all();
+
+        $baseUrl = 'http://172.22.21.204' . Yii::getAlias('@web/uploads/');
+        $resultado = [];
+
+        foreach ($produtos as $produto) {
+            //array dos produto
+            $produtoData = [
+                'id' => $produto->id,
+                'nomeProduto' => $produto->nomeProduto,
+                'preco' => $produto->preco,
+                'quantidade' => $produto->quantidade,
+                'descricaoProduto' => $produto->descricaoProduto,
+                'marca' => $produto->marca->nomeMarca,
+                'categoria' => $produto->categoria->nomeCategoria,
+                'iva' => $produto->iva->percentagem,
+                'genero' => $produto->genero->referencia,
+                'imagem' => null
+            ];
+
+            // Verifica se o produto tem imagens associadas
+            if (!empty($produto->imagens)) {
+                // Vai buscar a primeira imagem
+                $primeiraImagem = $produto->imagens[0];
+
+                // Monta a URL completa da imagem
+                $produtoData['imagem'] = $baseUrl . $primeiraImagem->filename;
+            }
+
+            //adiciona os dados do produto ao array de resultados
+            $resultado[] = $produtoData;
+        }
+        return $resultado;
 
     }
 
     public function actionProdutos()
     {
-        $userID = Yii::$app->params['id'];
+        $produtos = Produto::find()
+            ->with(['imagens' => function ($query) {
+                // Carrega apenas a primeira imagem associada
+                $query->orderBy(['id' => SORT_ASC])->limit(1);
+            }])
+            ->orderBy(['id' => SORT_DESC])
+            ->all();
 
-        if ($user = User::find()->where(['id' => $userID])->one()) {
-            // Verifica se o utilizador tem o papel "cliente"
-            if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
-            } else {
-                $produtos = Produto::find()
-                    ->with(['imagens' => function ($query) {
-                        // Carrega apenas a primeira imagem associada
-                        $query->orderBy(['id' => SORT_ASC])->limit(1);
-                    }])
-                    ->orderBy(['id' => SORT_DESC])
-                    ->all();
+        $baseUrl = 'http://172.22.21.204' . Yii::getAlias('@web/uploads/');
+        $resultado = [];
 
-                $baseUrl = 'http://172.22.21.204' . Yii::getAlias('@web/uploads/');
-                $resultado = [];
+        foreach ($produtos as $produto) {
+            //array dos produto
+            $produtoData = [
+                'id' => $produto->id,
+                'nomeProduto' => $produto->nomeProduto,
+                'preco' => $produto->preco,
+                'quantidade' => $produto->quantidade,
+                'descricaoProduto' => $produto->descricaoProduto,
+                'marca' => $produto->marca->nomeMarca,
+                'categoria' => $produto->categoria->nomeCategoria,
+                'iva' => $produto->iva->percentagem,
+                'genero' => $produto->genero->referencia,
+                'imagem' => null
+            ];
 
-                foreach ($produtos as $produto) {
-                    //array dos produto
-                    $produtoData = [
-                        'id' => $produto->id,
-                        'nomeProduto' => $produto->nomeProduto,
-                        'preco' => $produto->preco,
-                        'quantidade' => $produto->quantidade,
-                        'descricaoProduto' => $produto->descricaoProduto,
-                        'marca' => $produto->marca->nomeMarca,
-                        'categoria' => $produto->categoria->nomeCategoria,
-                        'iva' => $produto->iva->percentagem,
-                        'genero' => $produto->genero->referencia,
-                        'imagem' => null
-                    ];
+            // Verifica se o produto tem imagens associadas
+            if (!empty($produto->imagens)) {
+                // Vai buscar a primeira imagem
+                $primeiraImagem = $produto->imagens[0];
 
-                    // Verifica se o produto tem imagens associadas
-                    if (!empty($produto->imagens)) {
-                        // Vai buscar a primeira imagem
-                        $primeiraImagem = $produto->imagens[0];
-
-                        // Monta a URL completa da imagem
-                        $produtoData['imagem'] = $baseUrl . $primeiraImagem->filename;
-                    }
-
-                    //adiciona os dados do produto ao array de resultados
-                    $resultado[] = $produtoData;
-                }
-                return $resultado;
+                // Monta a URL completa da imagem
+                $produtoData['imagem'] = $baseUrl . $primeiraImagem->filename;
             }
+
+            //adiciona os dados do produto ao array de resultados
+            $resultado[] = $produtoData;
         }
-        return 'Não foi possível obter os produtos.';
+        return $resultado;
 
     }
 
@@ -101,14 +142,16 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
                 $produtos = $produtosmodel::find()->where(['nomeProduto' => $nomeProduto])->all();
                 return $produtos;
             }
         }
-        return 'Não foi possivel obter os produtos pelo nome pretendido.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os produtos pelo nome pretendido.'];
     }
 
     public function actionBuscarportamanho($tamanho_id)
@@ -118,7 +161,8 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
 
@@ -140,7 +184,8 @@ class ProdutoController extends ActiveController
                 ];
             }
         }
-        return 'Não foi possivel obter os produtos pelo tamanho selecionado.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os produtos pelo tamanho selecionado.'];
     }
 
     public function actionBuscarpormarca($marca_id)
@@ -150,7 +195,8 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
                 $produtos = $produtosmodel::find()->where(['marca_id' => $marca_id])->all();
@@ -162,7 +208,8 @@ class ProdutoController extends ActiveController
                 return $produtos;
             }
         }
-        return 'Não foi possivel obter os produtos pela marca selecionada.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os produtos pela marca selecionada.'];
     }
 
     public function actionBuscarporcategoria($categoria_id)
@@ -172,7 +219,8 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
                 $produtos = $produtosmodel::find()->where(['categoria_id' => $categoria_id])->all();
@@ -184,7 +232,8 @@ class ProdutoController extends ActiveController
                 return $produtos;
             }
         }
-        return 'Não foi possivel obter os produtos pela categoria selecionada.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os produtos pela categoria selecionada.'];
     }
 
     public function actionBuscarporgenero($genero_id)
@@ -194,7 +243,8 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtosmodel = new $this->modelClass;
                 $produtos = $produtosmodel::find()->where(['genero_id' => $genero_id])->all();
@@ -206,7 +256,8 @@ class ProdutoController extends ActiveController
                 return $produtos;
             }
         }
-        return 'Não foi possivel obter os produtos pela genero selecionado.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os produtos pela genero selecionado.'];
     }
 
     public function actionImagens($produto_id)
@@ -216,7 +267,8 @@ class ProdutoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtomodel = new $this->modelClass;
 
@@ -244,17 +296,19 @@ class ProdutoController extends ActiveController
                 ];
             }
         }
-        return 'Não foi possivel obter os imagems do produto selecionado.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possivel obter os imagems do produto selecionado.'];
     }
 
-    public function actionDetalhes($id)
+    /*public function actionDetalhes($id)
     {
         $userID = Yii::$app->params['id'];
 
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $produtomodel = new $this->modelClass;
                 //$produto = $produtomodel::findOne(['id' => $id]);
@@ -279,6 +333,7 @@ class ProdutoController extends ActiveController
                 ];
             }
         }
-        return 'Não foi possível obter os detalhes do produto pretendido.';
-    }
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível obter os detalhes do produto pretendido.'];
+    }*/
 }

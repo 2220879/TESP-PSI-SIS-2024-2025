@@ -32,7 +32,8 @@ class FavoritoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $favoritosmodel = new $this->modelClass;
                 $recs = $favoritosmodel::find()->all();
@@ -40,7 +41,8 @@ class FavoritoController extends ActiveController
             }
         }
 
-        return 'Não foi possível contar os favoritos.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível contar os favoritos.'];
 
     }
 
@@ -51,7 +53,8 @@ class FavoritoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             //verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $profile = Profile::find()->where(['user_id' => $userID])->one();
                 $favoritosmodel = new $this->modelClass;
@@ -80,7 +83,8 @@ class FavoritoController extends ActiveController
                 return $resultados;
             }
         }
-        return 'Não foi possível obter os favoritos.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível obter os favoritos.'];
     }
 
     public function actionAtribuirprodutofavorito()
@@ -89,16 +93,21 @@ class FavoritoController extends ActiveController
 
         if ($user = User::find()->where(['id' => $userID])->one()) {
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $request = Yii::$app->request;
 
                 $profile = Profile::find()->where(['user_id' => $user->id])->one();
 
-                $favorito = new Favorito();
-
                 $produtoId = $request->getBodyParam('produto');
 
+                if (Favorito::find()->where(['produto_id' => $produtoId, 'profile_id' => $profile->id])->exists()) {
+                    Yii::$app->response->statusCode = 400;
+                    return ['message' => 'Produto já adicionado nos favoritos.'];
+                }
+
+                $favorito = new Favorito();
                 $favorito->produto_id = $produtoId;
                 $favorito->profile_id = $profile->id;
                 if ($favorito->save()) {
@@ -135,7 +144,8 @@ class FavoritoController extends ActiveController
                 }
             }
         }
-        return 'Favorito não encontrado.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Favorito não encontrado.'];
     }
 
     public function actionApagarprodutofavorito()
@@ -145,7 +155,8 @@ class FavoritoController extends ActiveController
         if ($user = User::find()->where(['id' => $userID])->one()) {
             // Verifica se o utilizador tem o papel "cliente"
             if (!Yii::$app->authManager->checkAccess($user->id, 'cliente')) {
-                return 'O Utilizador introduzido não tem permissões de cliente';
+                Yii::$app->response->statusCode = 400;
+                return ['message' => 'O Utilizador introduzido não tem permissões de cliente'];
             } else {
                 $request = Yii::$app->request;
                 $favoritoID = $request->getBodyParam('favorito');
@@ -154,15 +165,16 @@ class FavoritoController extends ActiveController
 
                 if ($favorito != null) {
                     $favorito->delete();
-                    //$favorito->delete();
-                    //return $favorito;
+
                     return $favorito->delete();
                 } else {
-                    return 'Favorito não encontrada.';
+                    Yii::$app->response->statusCode = 400;
+                    return ['message' => 'Favorito não encontrado.'];
                 }
             }
         }
 
-        return 'Não foi possível apagar o produto pretendido nos favoritos.';
+        Yii::$app->response->statusCode = 400;
+        return ['message' => 'Não foi possível apagar o produto pretendido nos favoritos.'];
     }
 }

@@ -86,6 +86,7 @@ return [
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/avaliacao',
                     'extraPatterns' => [
                         'POST criaravaliacao' => 'criaravaliacao',
+                        'DELETE apagaravaliacao'=> 'apagaravaliacao',
                     ],
                 ],
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/favorito',
@@ -143,6 +144,7 @@ return [
                         'POST diminuir' => 'diminuir',
                         'POST aumentar' => 'aumentar',
                         'DELETE apagarlinhacarrinho' => 'apagarlinhacarrinho',
+                        'GET carrinho' => 'carrinho',
                     ],
                 ],
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'api/encomenda',
